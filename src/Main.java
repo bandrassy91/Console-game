@@ -1,16 +1,24 @@
 import java.util.Scanner;
+import java.io.File;
 
 public class Main {
     public static void main(String[] args) {
         System.out.println("Welcome to the Maze Game!");
         System.out.println("Use W (up), A (left), S (down), D (right) to move. Type 'quit' to exit.");
 
-        // Create the maze with smaller dimensions for better visibility
-        Maze maze = new Maze(15, 15);
-        maze.generate();
+        // Create the maze and load from file
+        Maze maze = new Maze(15, 15); // Default dimensions, will be overridden by file
 
-        // Create the player
-        Player player = new Player(1, 1);
+        // Get the current directory and file path
+        String filePath = "palya.txt";
+        File file = new File(filePath);
+
+        if (maze.loadFromFile(filePath)) {
+            System.out.println("Successfully loaded maze from " + filePath);
+        }
+        // Create the player at the starting position (1,1) or from the file
+        int[] startPosition = maze.getPlayerStartPosition();
+        Player player = new Player(startPosition[0], startPosition[1]);
 
         // Game loop
         Scanner scanner = new Scanner(System.in);
@@ -53,9 +61,6 @@ public class Main {
                 // Check if the move is valid
                 if (maze.isValidMove(newX, newY)) {
                     player.move(newX, newY);
-                    // Debug output - can be removed later
-                    System.out.println("Moved from (" + originalX + "," + originalY +
-                                      ") to (" + newX + "," + newY + ")");
                 } else {
                     System.out.println("Invalid move. You can't go through walls!");
                 }

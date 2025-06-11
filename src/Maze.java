@@ -1,5 +1,8 @@
 import java.util.Random;
 import java.util.Stack;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * Represents a maze in the game.
@@ -33,6 +36,62 @@ public class Maze {
             for (int x = 0; x < this.width; x++) {
                 grid[y][x] = WALL;
             }
+        }
+    }
+
+    /**
+     * Loads a maze from a file.
+     *
+     * @param filePath the path to the file containing the maze
+     * @return true if the maze was loaded successfully, false otherwise
+     */
+    public boolean loadFromFile(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            // Read dimensions from the first line
+            String dimensionsLine = reader.readLine();
+            if (dimensionsLine == null) return false;
+
+            String[] dimensions = dimensionsLine.split(" ");
+            if (dimensions.length < 2) return false;
+
+            this.width = Integer.parseInt(dimensions[0]);
+            this.height = Integer.parseInt(dimensions[1]);
+            this.grid = new char[this.height][this.width];
+
+            // Read the maze grid
+            int playerX = -1, playerY = -1;
+            exitX = -1;
+            exitY = -1;
+
+            for (int y = 0; y < height; y++) {
+                String line = reader.readLine();
+                if (line == null || line.length() < width) {
+                    return false; // File ended too early or line too short
+                }
+
+                for (int x = 0; x < width; x++) {
+                    char cell = line.charAt(x);
+
+                    if (cell == 'P') {
+                        // Found player starting position
+                        playerX = x;
+                        playerY = y;
+                        grid[y][x] = PATH; // Set as path in the grid
+                    } else if (cell == 'E') {
+                        // Found exit
+                        exitX = x;
+                        exitY = y;
+                        grid[y][x] = EXIT;
+                    } else {
+                        grid[y][x] = cell;
+                    }
+                }
+            }
+
+            return exitX != -1 && exitY != -1; // Ensure exit was found
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("Error loading maze from file: " + e.getMessage());
+            return false;
         }
     }
 
@@ -97,11 +156,11 @@ public class Maze {
         grid[exitY][exitX] = EXIT;
 
         // Ensure there's a path to the exit
-        if (grid[exitY-1][exitX] == WALL && grid[exitY][exitX-1] == WALL) {
+        if (grid[exitY - 1][exitX] == WALL && grid[exitY][exitX - 1] == WALL) {
             if (random.nextBoolean()) {
-                grid[exitY-1][exitX] = PATH;
+                grid[exitY - 1][exitX] = PATH;
             } else {
-                grid[exitY][exitX-1] = PATH;
+                grid[exitY][exitX - 1] = PATH;
             }
         }
 
@@ -152,5 +211,22 @@ public class Maze {
      */
     public boolean isExit(int x, int y) {
         return x == exitX && y == exitY;
+    }
+
+    /**
+     * Gets the starting position for the player from the loaded maze.
+     *
+     * @return an array containing [x, y] coordinates, or null if not found
+     */
+    public int[] getPlayerStartPosition() {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if (grid[y][x] == 'P') {
+                    return new int[]{x, y};
+                }
+            }
+        }
+        // Default to position (1,1) if no player marker was found
+        return new int[]{1, 1};
     }
 }
